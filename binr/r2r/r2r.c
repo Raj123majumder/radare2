@@ -652,6 +652,10 @@ static void print_diff(const char *actual, const char *expected, bool diffchar) 
 	r_list_free (lines);
 	free (uni);
 	printf ("\n");
+cleanup:
+	if (regexp) {
+		R_FREE (output);
+	}
 }
 
 static R2RProcessOutput *print_runner(const char *file, const char *args[], size_t args_size,
@@ -682,15 +686,18 @@ static void print_result_diff(R2RRunConfig *config, R2RTestResultInfo *result) {
 	case R2R_TEST_TYPE_CMD: {
 		r2r_run_cmd_test (config, result->test->cmd_test, print_runner, NULL);
 		const char *expect = result->test->cmd_test->expect.value;
-		if (expect && strcmp (result->proc_out->out, expect)) {
+		const char *out = result->proc_out->out;
+		const char *regexp_out = result->test->cmd_test->regexp_out.value;
+		if (expect && !r_test_cmp_cmd_output (out, expect, regexp_out)) {
 			printf ("-- stdout\n");
-			print_diff (result->proc_out->out, expect, false);
+			print_diff (out, expect, false, regexp_out);
 		}
 		expect = result->test->cmd_test->expect_err.value;
 		const char *err = result->proc_out->err;
-		if (expect && strcmp (err, expect)) {
+		const char *regexp_err = result->test->cmd_test->regexp_err.value;
+		if (expect && !r_test_cmp_cmd_output (err, expect, regexp_err)) {
 			printf ("-- stderr\n");
-			print_diff (err, expect, false);
+			print_diff (err, expect, false, regexp_err);
 		} else if (*err) {
 			printf ("-- stderr\n%s\n", err);
 		}
@@ -1085,6 +1092,7 @@ static void interact_commands(R2RTestResultInfo *result, RPVector *fixup_results
 static void interact_diffchar(R2RTestResultInfo *result) {
 	const char *actual = result->proc_out->out;
 	const char *expected = result->test->cmd_test->expect.value;
+	const char *regexp_out = result->test->cmd_test->regexp_out.value;
 	printf ("-- stdout\n");
-	print_diff (actual, expected, true);
+	print_diff (actual, expected, true, regexp_out);
 }

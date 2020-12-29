@@ -69,6 +69,8 @@ typedef struct r2r_cmd_test_t {
 	macro_str ("CMDS", cmds) \
 	macro_str ("EXPECT", expect) \
 	macro_str ("EXPECT_ERR", expect_err) \
+	macro_str ("REGEXP_OUT", regexp_out) \
+	macro_str ("REGEXP_ERR", regexp_err) \
 	macro_bool ("BROKEN", broken)
 
 typedef enum r2r_asm_test_mode_t {

@@ -41,6 +41,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include "r_regex.h"
+#include "r_util/r_str.h"
 
 #include "utils.h"
 #include "regex2.h"
@@ -138,7 +139,7 @@ static char nuls[10];		/* place to point scanner in event of error */
 #define	DROP(n)	(p->slen -= (n))
 
 
-R_API int r_regex_match (const char *pattern, const char *flags, const char *text) {
+R_API int r_regex_match(const char *pattern, const char *flags, const char *text) {
 	int ret;
 	RRegex rx;
 	int re_flags = r_regex_flags (flags);
@@ -156,6 +157,34 @@ R_API int r_regex_match (const char *pattern, const char *flags, const char *tex
 		return -1;
 	return (regexec (&preg, str, NUM_MATCHES, pmatch, 0))?1:0;
 #endif
+}
+
+R_API RList *r_regex_get_match_list(const char *pattern, const char *flags, const char *text) {
+	RList *list = r_list_newf (free);
+	RRegex rx;
+	RRegexMatch match;
+	char *entry;
+	size_t entry_len = 0;
+	int re_flags = r_regex_flags (flags);
+	if (r_regex_comp (&rx, pattern, re_flags)) {
+		eprintf ("Failed to compile regexp: %s\n", pattern);
+		return NULL;
+	}
+
+	/* Initialize the boundaries for R_REGEX_STARTEND */
+	match.rm_so = 0;
+	match.rm_eo = strlen (text);
+	while (!r_regex_exec (&rx, text, 1, &match, re_flags | R_REGEX_STARTEND)) {
+		entry_len = match.rm_eo - match.rm_so + 1;
+		entry = R_NEWS0 (char, entry_len);
+		r_str_ncpy (entry, text + match.rm_so, entry_len);
+		r_list_append (list, entry);
+		/* Update the boundaries for R_REGEX_STARTEND */
+		match.rm_so = match.rm_eo;
+		match.rm_eo = strlen (text);
+	}
+	r_regex_fini (&rx);
+	return list;
 }
 
 R_API RRegex *r_regex_new(const char *pattern, const char *flags) {

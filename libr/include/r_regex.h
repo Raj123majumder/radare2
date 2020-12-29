@@ -2,6 +2,7 @@
 #define	R2_REGEX_H
 
 #include <r_types.h>
+#include <r_list.h>
 #include <sys/types.h>
 
 typedef struct r_regex_t {
@@ -57,9 +58,10 @@ typedef struct r_regmatch_t {
 #define	R_REGEX_LARGE		01000	/* force large representation */
 #define	R_REGEX_BACKR		02000	/* force use of backref code */
 
-R_API RRegex *r_regex_new (const char *pattern, const char *cflags);
-R_API int r_regex_run (const char *pattern, const char *flags, const char *text);
-R_API int r_regex_match (const char *pattern, const char *flags, const char *text);
+R_API RRegex *r_regex_new(const char *pattern, const char *cflags);
+R_API int r_regex_run(const char *pattern, const char *flags, const char *text);
+R_API int r_regex_match(const char *pattern, const char *flags, const char *text);
+R_API RList *r_regex_get_match_list(const char *pattern, const char *flags, const char *text);
 R_API int r_regex_flags(const char *flags);
 R_API int r_regex_comp(RRegex*, const char *, int);
 R_API size_t r_regex_error(int, const RRegex*, char *, size_t);
@@ -68,7 +70,7 @@ R_API size_t r_regex_error(int, const RRegex*, char *, size_t);
  * a dummy argument name is added.
  */
 R_API bool r_regex_check(const RRegex *rr, const char *str);
-R_API int r_regex_exec(const RRegex *, const char *, size_t, RRegexMatch __pmatch[], int);
+R_API int r_regex_exec(const RRegex *preg, const char *string, size_t nmatch, RRegexMatch __pmatch[], int eflags);
 R_API void r_regex_free(RRegex *);
 R_API void r_regex_fini(RRegex *);
 
