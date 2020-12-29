@@ -53,6 +53,8 @@ typedef struct r2r_cmd_test_t {
 	R2RCmdTestStringRecord cmds;
 	R2RCmdTestStringRecord expect;
 	R2RCmdTestStringRecord expect_err;
+	R2RCmdTestStringRecord regexp_out;
+	R2RCmdTestStringRecord regexp_err;
 	R2RCmdTestBoolRecord broken;
 	R2RCmdTestNumRecord timeout;
 	ut64 run_line;

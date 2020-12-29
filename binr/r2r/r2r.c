@@ -591,17 +591,23 @@ static RThreadFunctionRet worker_th(RThread *th) {
 	return R_TH_STOP;
 }
 
-static void print_diff(const char *actual, const char *expected, bool diffchar) {
+static void print_diff(const char *actual, const char *expected, bool diffchar, const char *regexp) {
 	RDiff *d = r_diff_new ();
 #ifdef __WINDOWS__
 	d->diff_cmd = "git diff --no-index";
 #endif
+	const char *output = actual;
+	if (regexp) {
+		RList *matches = r_regex_get_match_list (regexp, "en", actual);
+		output = r_list_to_str (matches, '\0');
+		r_list_free (matches);
+	}
 	if (diffchar) {
 		RDiffChar *diff = r_diffchar_new ((const ut8 *)expected, (const ut8 *)actual);
 		if (diff) {
 			r_diffchar_print (diff);
 			r_diffchar_free (diff);
-			return;
+			goto cleanup;
 		}
 		d->diff_cmd = "git diff --no-index --word-diff=porcelain --word-diff-regex=.";
 	}
@@ -675,6 +681,18 @@ static R2RProcessOutput *print_runner(const char *file, const char *args[], size
 	}
 	printf ("\n");
 	return NULL;
+}
+
+R_API bool r_test_cmp_cmd_output(const char *output, const char *expect, const char *regexp) {
+	if (regexp) {
+		RList *matches = r_regex_get_match_list (regexp, "en", output);
+		const char *match = r_list_to_str (matches, '\0');
+		bool equal = (0 == strcmp (expect, match));
+		r_list_free (matches);
+		R_FREE (match);
+		return equal;
+	}
+	return !strcmp (expect, output);
 }
 
 static void print_result_diff(R2RRunConfig *config, R2RTestResultInfo *result) {
